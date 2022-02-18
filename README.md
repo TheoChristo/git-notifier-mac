@@ -12,6 +12,8 @@ The notification displays useful information about the commit which triggered it
 
 Clicking on the notification brings up the corresponding remote's github page, using the default browser.
 
+**git-notifier-mac** can be used to watch for changes by collaborators in team projects, as well as track the progress of public projects. It can track any public or private repo, as long as you have a local git repository linked to it - and corresponding access rights.
+
 **git-notifier-mac** uses JulienXX's [terminal notifier](https://github.com/julienXX/terminal-notifier) to trigger notifications on MacOs.
 
 ## Use
