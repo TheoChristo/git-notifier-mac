@@ -121,8 +121,10 @@ listRepos () {
         BRANCH=$(echo $(echo $(git -C "$REPOPATH" branch -a --contains "$LASTKNOWN"))| awk -F/ '{print $(NF)}')
         COMM=$(git -C "$REPOPATH" show "$LASTKNOWN")
         AUTHOR=$(echo "$COMM" | grep 'Author' | awk -F'Author:\ ' '{print $2}' | awk -F'<' '{print $1}')
+        DATE=$(echo "$COMM" | grep 'Date:' | awk -F'Date:\ ' '{print $2}')
         MSG=$(echo "$COMM" | grep -v -e '^$' | grep -A1 -i 'Date:\ ' | grep -m1 -vi 'Date:\ ' | xargs)
         echo '             Author :' "$AUTHOR"
+        echo '             Date   :' $DATE
         echo '             Branch :' "$BRANCH"
         echo '             Message:' "$MSG"
     done <"$PATHS"
