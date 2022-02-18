@@ -14,8 +14,9 @@ checkRepo () {
     UPDTMSG=$(git -C "$REPOPATH" remote show origin)
     REMOTE=$(echo "$UPDTMSG" | grep -i 'Fetch URL' | awk -F'Fetch\ URL:\ ' '{print $2}')
     
-    LASTCOMM=$(git -C "$REPOPATH" log --all --oneline| grep -m1 '\ ' | awk '{print $1}')
-    BRANCH=$(echo $(echo $(git -C "$REPOPATH" branch -a --contains $LASTCOMM))| awk -F/ '{print $(NF)}')
+    LASTCOMM=$(git -C "$REPOPATH" log --all --oneline -1 | awk '{print $1}')
+    COMM=$(git -C "$REPOPATH" show "$LASTCOMM" --no-patch --format="%an%n%s%n%D")
+
     LASTKNOWN=$(grep -w "$REPO" $MEMFILE | awk '{print $2}')
 
     if [ $LASTKNOWN = $LASTCOMM ];
@@ -26,12 +27,12 @@ checkRepo () {
         then
             echo "$REPO was is not in watchlist."
         else
-            echo "New commit available in " "$REPO""/""$BRANCH"
+            echo "New commit available in " "$REPO" "/" $(echo "$COMM" | sed -n '3p')
             sed -i '.bak' -e "s/^$REPO.*/$REPO\ $LASTCOMM/" $MEMFILE
         fi
-        COMM=$(git -C "$REPOPATH" show "$LASTCOMM")
-        AUTHOR=$(echo "$COMM" | grep 'Author' | awk -F'Author:\ ' '{print $2}' | awk -F'<' '{print $1}')
-        MSG=$(echo "$COMM" | grep -v -e '^$' | grep -A1 -i 'Date:\ ' | grep -m1 -vi 'Date:\ ' | xargs)
+        AUTHOR=$(echo "$COMM" | sed -n '1p')
+        MSG=$(echo "$COMM" | sed -n '2p')
+        BRANCH=$(echo "$COMM" | sed -n '3p' | awk -F/ '{print $2}')
 
         terminal-notifier -title $AUTHOR -subtitle $REPO" / "$BRANCH -message $"$MSG" -appIcon $ICON -sound Glass -open $REMOTE
     fi
@@ -112,17 +113,18 @@ listRepos () {
         REPO=$REPOPATH
         RNAME=$(echo "$REPOPATH" | awk -F/ '{print $(NF)}')
 
-        echo "\n  Repo:" "$RNAME"
+        echo "\n " "$RNAME"
         echo '  Path:' "$REPOPATH"
         
         LASTKNOWN=$(grep -w "$RNAME" $MEMFILE | awk '{print $2}')
         echo '  Last Known Commit :' "$LASTKNOWN" 
 
-        BRANCH=$(echo $(echo $(git -C "$REPOPATH" branch -a --contains "$LASTKNOWN"))| awk -F/ '{print $(NF)}')
-        COMM=$(git -C "$REPOPATH" show "$LASTKNOWN")
-        AUTHOR=$(echo "$COMM" | grep 'Author' | awk -F'Author:\ ' '{print $2}' | awk -F'<' '{print $1}')
-        DATE=$(echo "$COMM" | grep 'Date:' | awk -F'Date:\ ' '{print $2}')
-        MSG=$(echo "$COMM" | grep -v -e '^$' | grep -A1 -i 'Date:\ ' | grep -m1 -vi 'Date:\ ' | xargs)
+        COMM=$(git -C "$REPOPATH" show "$LASTKNOWN" --no-patch --format="%an%n%s%n%cd%n%D")
+        AUTHOR=$(echo "$COMM" | sed -n '1p')
+        MSG=$(echo "$COMM" | sed -n '2p')
+        DATE=$(echo "$COMM" | sed -n '3p')
+        BRANCH=$(echo "$COMM" | sed -n '4p') #| awk -F/ '{print $2}')
+
         echo '             Author :' "$AUTHOR"
         echo '             Date   :' $DATE
         echo '             Branch :' "$BRANCH"
