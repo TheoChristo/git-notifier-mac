@@ -9,12 +9,12 @@ checkRepo () {
     UPD=$(git -C "$REPOPATH" remote update)
     
     REPO=$(echo "$REPOPATH" | awk -F/ '{print $(NF)}')
-
+    
     UPDTMSG=$(git -C "$REPOPATH" remote show origin)
     REMOTE=$(echo "$UPDTMSG" | grep -i 'Fetch URL' | awk -F'Fetch\ URL:\ ' '{print $2}')
     
     LASTCOMM=$(git -C "$REPOPATH" log --all --oneline| grep -m1 '\ ' | awk '{print $1}')
-    BRANCH=$(echo $(echo $(git -C "$REPOPATH" branch -a --contains $LASTKNOWN))| awk -F/ '{print $(NF)}')
+    BRANCH=$(echo $(echo $(git -C "$REPOPATH" branch -a --contains $LASTCOMM))| awk -F/ '{print $(NF)}')
     LASTKNOWN=$(grep -w "$REPO" $MEMFILE | awk '{print $2}')
 
     if [ $LASTKNOWN = $LASTCOMM ];
@@ -36,16 +36,13 @@ checkRepo () {
     fi
 }
 
-showMessage () {
-    echo 1
-}
-
 processRepos () {
     while true; do
         while IFS= read -r REPOPATH
         do
             checkRepo "$REPOPATH"
         done <"$PATHS"
+        echo ''
         sleep 300
     done
 }
@@ -116,7 +113,7 @@ listRepos () {
         LASTKNOWN=$(grep -w "$RNAME" $MEMFILE | awk '{print $2}')
         echo '  Last Known Commit :' "$LASTKNOWN" 
 
-        BRANCH=$(echo $(echo $(git -C "$REPOPATH" branch -a --contains $LASTKNOWN))| awk -F/ '{print $(NF)}')
+        BRANCH=$(echo $(echo $(git -C "$REPOPATH" branch -a --contains "$LASTKNOWN"))| awk -F/ '{print $(NF)}')
         COMM=$(git -C "$REPOPATH" show "$LASTKNOWN")
         AUTHOR=$(echo "$COMM" | grep 'Author' | awk -F'Author:\ ' '{print $2}' | awk -F'<' '{print $1}')
         MSG=$(echo "$COMM" | grep -v -e '^$' | grep -A1 -i 'Date:\ ' | grep -m1 -vi 'Date:\ ' | xargs)
