@@ -4,13 +4,13 @@ A simple tool to keep track of changes in git repositories.
 
 <p align="center"> <img src="./icons/logo.png" width="128" height="128" /> </p>
 
-**git-notifier-mac** will notify you - using a system notification with sound, every time a new commit is made in one of the git repositories it is tracking.
+**git-notifier-mac** will notify you every time a new commit is made in one of the git repositories it is tracking. When it detects a new commit, it triggers a system notification - along with an audible cue.
 
 The notification displays useful information about the commit which triggered it, including the repository name and branch, as well as the author and  commit message.
 
 <p align="center"> <img src="./icons/git-notifier-notification.png" /> </p>
 
-Clicking on the notification brings up the corresponding remote's github page, using the default browser.
+Clicking the notification brings up the remote's github page, using the default browser.
 
 **git-notifier-mac** can be used to watch for changes by collaborators in team projects, as well as track the progress of public projects. It can track any public or private repo, as long as you have a local git repository linked to it - and corresponding access rights.
 
@@ -42,7 +42,7 @@ Clicking on the notification brings up the corresponding remote's github page, u
     ./git-notifier start
     ```
 
-    You can also pass an (optional) argument to specify the frequency with which git-notifier will watch for changes. By default, git-notifier waits 300 seconds between checks.
+    You can also pass an (optional) argument to specify the frequency with which git-notifier will watch for new commits. By default, git-notifier waits 300 seconds between checks.
 
     ```cli
     ./git-notifier start [(optional) sleep-seconds]
