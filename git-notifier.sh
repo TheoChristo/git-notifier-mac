@@ -2,6 +2,7 @@
 VERSION='0.0.1'
 MEMFILE='notifier-memo.txt'
 PATHS='notifier-paths.txt'
+ICON='logo.png'
 
 checkRepo () {
     REPOPATH=$1
@@ -31,7 +32,7 @@ checkRepo () {
         AUTHOR=$(echo "$COMM" | grep 'Author' | awk -F'Author:\ ' '{print $2}' | awk -F'<' '{print $1}')
         MSG=$(echo "$COMM" | grep -v -e '^$' | grep -A1 -i 'Date:\ ' | grep -m1 -vi 'Date:\ ' | xargs)
 
-        terminal-notifier -title $AUTHOR -subtitle $REPO" / "$BRANCH -message $"$MSG" -appIcon mia.png -sound Glass -open $REMOTE
+        terminal-notifier -title $AUTHOR -subtitle $REPO" / "$BRANCH -message $"$MSG" -appIcon $ICON -sound Glass -open $REMOTE
     fi
 }
 
@@ -63,7 +64,7 @@ addRepo () {
                 echo "$REPOPATH" >> notifier-paths.txt
                 echo "$REPO" $(echo "$LASTCOMM" | awk '{print $1}') >> $MEMFILE
                 echo '  '"$REPO" added to watchlist ':)'    
-                terminal-notifier -title $REPO -subtitle 'Added to watchlist' -message $"$REPOPATH" -appIcon mia.png -sound Glass -open $REMOTE
+                terminal-notifier -title $REPO -subtitle 'Added to watchlist' -message $"$REPOPATH" -appIcon $ICON -sound Glass -open $REMOTE
     
             ;;
             *) echo '  '"$REPO" is already 'in' watchlist ';)'
@@ -87,7 +88,7 @@ removeRepo () {
                     sed -i '.bak' -e "/$RNAME/d" $PATHS
                     echo '  'Removing "$RNAME" from memory
                     sed -i '.bak' -e "/$RNAME/d" $MEMFILE
-                    terminal-notifier -title $REPO -message $"Removed from watchlist" -appIcon mia.png -sound Glass -open $REMOTE
+                    terminal-notifier -title $REPO -message $"Removed from watchlist" -appIcon $ICON -sound Glass -open $REMOTE
                 ;;
             esac
         ;;
@@ -98,7 +99,7 @@ removeRepo () {
             sed -i '.bak' -e "/$RNAME/d" $PATHS
             echo '  'Removing "$RNAME" from memory
             sed -i '.bak' -e "/$RNAME/d" $MEMFILE
-            terminal-notifier -title $REPO -message $"Removed from watchlist" -appIcon mia.png -sound Glass -open $REMOTE
+            terminal-notifier -title $REPO -message $"Removed from watchlist" -appIcon $ICON -sound Glass -open $REMOTE
         ;;
     esac
 }
