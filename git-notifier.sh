@@ -2,7 +2,8 @@
 VERSION='0.0.1'
 MEMFILE='notifier-memo.txt'
 PATHS='notifier-paths.txt'
-ICON='logo.png'
+ICON='icons/logo.png'
+SLEEPSECONDS=300
 
 checkRepo () {
     REPOPATH=$1
@@ -37,13 +38,17 @@ checkRepo () {
 }
 
 processRepos () {
+    if [[ $1 -gt 0 ]]
+    then
+        SLEEPSECONDS=$1
+    fi
     while true; do
         while IFS= read -r REPOPATH
         do
             checkRepo "$REPOPATH"
         done <"$PATHS"
         echo ''
-        sleep 300
+        sleep $SLEEPSECONDS
     done
 }
 
@@ -61,7 +66,7 @@ addRepo () {
                 echo "$REPOPATH" >> notifier-paths.txt
                 echo "$REPO" $(echo "$LASTCOMM" | awk '{print $1}') >> $MEMFILE
                 echo '  '"$REPO" added to watchlist ':)'    
-                terminal-notifier -title $REPO -subtitle 'Added to watchlist' -message $"$REPOPATH" -appIcon $ICON -sound Glass -open $REMOTE
+                terminal-notifier -title $REPO -subtitle 'Added to watchlist' -message $"$REPOPATH" -appIcon $ICON -sound Glass
     
             ;;
             *) echo '  '"$REPO" is already 'in' watchlist ';)'
@@ -85,7 +90,7 @@ removeRepo () {
                     sed -i '.bak' -e "/$RNAME/d" $PATHS
                     echo '  'Removing "$RNAME" from memory
                     sed -i '.bak' -e "/$RNAME/d" $MEMFILE
-                    terminal-notifier -title $REPO -message $"Removed from watchlist" -appIcon $ICON -sound Glass -open $REMOTE
+                    terminal-notifier -title $RNAME -message $"Removed from watchlist" -appIcon $ICON -sound Glass
                 ;;
             esac
         ;;
@@ -96,7 +101,7 @@ removeRepo () {
             sed -i '.bak' -e "/$RNAME/d" $PATHS
             echo '  'Removing "$RNAME" from memory
             sed -i '.bak' -e "/$RNAME/d" $MEMFILE
-            terminal-notifier -title $REPO -message $"Removed from watchlist" -appIcon $ICON -sound Glass -open $REMOTE
+            terminal-notifier -title $RNAME -message $"Removed from watchlist" -appIcon $ICON -sound Glass
         ;;
     esac
 }
@@ -131,8 +136,9 @@ showVersion () {
 showHelp () {
     showVersion
     echo '\n  Usage:'
-    echo '  [start | -s]'
+    echo '  [start | -s] [arg]'
     echo '  \tStart git-notifier deamon'
+    echo '  \targ: (optional) Seconds between remote updates. Default: 300'
     
     echo '  [add | -a] [arg]'
     echo '  \tAdd new git repo to watchlist'
@@ -154,7 +160,7 @@ showHelp () {
 }
 
 case $1 in
-    'start' | '-s') processRepos
+    'start' | '-s') processRepos $2
     ;;
     'add' | '-a') addRepo "$2"
     ;;
