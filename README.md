@@ -4,11 +4,13 @@ A simple tool to keep track of changes in git repositories.
 
 <p align="center"> <img src="./icons/logo.png" width="128" height="128" /> </p>
 
-**git-notifier-mac** will notify you - using a system notification -, every time a new commit is made in your tracked git repositories.
+**git-notifier-mac** will notify you - using a system notification, every time a new commit is made in one of the git repositories it is tracking.
 
-The notification displays information about the commit which triggered it, including the author, branch and commit message.
+The notification displays useful information about the commit which triggered it, including the repository name and branch, as well as the author and  commit message.
 
 <p align="center"> <img src="./icons/git-notifier-notification.png" /> </p>
+
+Clicking on the notification brings up the corresponding remote's github page, using the default browser.
 
 **git-notifier-mac** uses JulienXX's [terminal notifier](https://github.com/julienXX/terminal-notifier) to trigger notifications on MacOs.
 
