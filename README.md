@@ -19,10 +19,10 @@ Clicking on the notification brings up the corresponding remote's github page, u
 * To **add** a new repository to your watchlist, simply run
   
     ``` cli
-    ./git-notifier add [path-to-repo]
+    ./git-notifier add [absolute-path-to-repo]
     ```
 
-* To **remove** a repo from your watchlist,run
+* To **remove** a repo from your watchlist, run
   
     ```cli
     ./git-notifier remove [repo-name]
