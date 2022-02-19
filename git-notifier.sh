@@ -25,7 +25,7 @@ checkRepo () {
     else
         echo "New commit available in" "$REPO" "/" $(echo "$COMM" | sed -n '4p')
         # Update last tracked commit hash
-        sed -i '.bak' -e "s/^$REPO.*/$REPO\ $LASTCOMM/" $MEMFILE
+        sed -i '.bak' -e "s/^$REPO.*/$REPO"$MYDELIMITER"$LASTCOMM/" $MEMFILE
         # Decode last commit info
         AUTHOR=$(echo "$COMM" | sed -n '2p')
         MSG=$(echo "$COMM" | sed -n '3p')
