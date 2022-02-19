@@ -2,38 +2,37 @@
 VERSION='0.0.1'
 MEMFILE='notifier-memo.txt'
 PATHS='notifier-paths.txt'
+PATHSDELIMITER=','
 ICON='icons/logo.png'
+
 SLEEPSECONDS=300
 
 checkRepo () {
-    REPOPATH=$1
+    # Decode Path
+    REPO=$(echo "$1" | awk -F$PATHSDELIMITER '{print $1}')
+    REPOPATH=$(echo "$1" | awk -F$PATHSDELIMITER '{print $2}')
+    #Fetch remote updates
     UPD=$(git -C "$REPOPATH" remote update)
-    
-    REPO=$(echo "$REPOPATH" | awk -F/ '{print $(NF)}')
-    
-    UPDTMSG=$(git -C "$REPOPATH" remote show origin)
-    REMOTE=$(echo "$UPDTMSG" | grep -i 'Fetch URL' | awk -F'Fetch\ URL:\ ' '{print $2}')
-    
-    LASTCOMM=$(git -C "$REPOPATH" log --all --oneline -1 | awk '{print $1}')
-    COMM=$(git -C "$REPOPATH" show "$LASTCOMM" --no-patch --format="%an%n%s%n%D")
-
+    # Get last commit info
+    COMM=$(git -C "$REPOPATH" log --all -1 --format="%h%n%an%n%s%n%D") #hash,author,message,branch
+    LASTCOMM=$(echo "$COMM" | sed -n '1p')
+    # Last tracked commit hash
     LASTKNOWN=$(grep -w "$REPO" $MEMFILE | awk '{print $2}')
 
     if [ $LASTKNOWN = $LASTCOMM ];
     then
         echo "All is c0ol in $REPO, rasta..."
     else
-        if [ -z "$LASTKNOWN" ];
-        then
-            echo "$REPO was is not in watchlist."
-        else
-            echo "New commit available in " "$REPO" "/" $(echo "$COMM" | sed -n '3p')
-            sed -i '.bak' -e "s/^$REPO.*/$REPO\ $LASTCOMM/" $MEMFILE
-        fi
-        AUTHOR=$(echo "$COMM" | sed -n '1p')
-        MSG=$(echo "$COMM" | sed -n '2p')
-        BRANCH=$(echo "$COMM" | sed -n '3p' | awk -F/ '{print $2}')
-
+        echo "New commit available in" "$REPO" "/" $(echo "$COMM" | sed -n '4p')
+        # Update last tracked commit hash
+        sed -i '.bak' -e "s/^$REPO.*/$REPO\ $LASTCOMM/" $MEMFILE
+        # Decode last commit info
+        AUTHOR=$(echo "$COMM" | sed -n '2p')
+        MSG=$(echo "$COMM" | sed -n '3p')
+        BRANCH=$(echo "$COMM" | sed -n '4p' | awk -F/ '{print $2}')
+        # Identify Remote
+        REMOTE=$(git -C "$REPOPATH" remote -v | sed -n '1p' | awk -F\  '{print $2}')
+        # Notify
         terminal-notifier -title $AUTHOR -subtitle $REPO" / "$BRANCH -message $"$MSG" -appIcon $ICON -sound Glass -open $REMOTE
     fi
 }
@@ -56,7 +55,8 @@ processRepos () {
 addRepo () {
     REPOPATH=$1
     echo "$REPOPATH"
-    REPO=$(echo "$REPOPATH" | awk -F/ '{print $(NF)}')
+    REPO=$(git -C "$REPOPATH" remote -v | sed -n '1p' | awk -F/ '{print $NF}' | awk -F.git '{print $1}')
+    
     LASTCOMM=$(git -C "$REPOPATH" log -1 --all --oneline | awk '{print $1}')
     case $LASTCOMM in
         '') echo Error adding "$REPO" to watchlist ':('
@@ -64,7 +64,7 @@ addRepo () {
         *)
         case $(grep -w "$REPO" $MEMFILE | awk '{print $1}') in
             '')
-                echo "$REPOPATH" >> notifier-paths.txt
+                echo "$REPO""$PATHSDELIMITER""$REPOPATH" >> notifier-paths.txt
                 echo "$REPO" $(echo "$LASTCOMM" | awk '{print $1}') >> $MEMFILE
                 echo '  '"$REPO" added to watchlist ':)'    
                 terminal-notifier -title $REPO -subtitle 'Added to watchlist' -message $"$REPOPATH" -appIcon $ICON -sound Glass
@@ -78,48 +78,52 @@ addRepo () {
 }
 
 removeRepo () {
-    case $(grep -w "$1" $MEMFILE | awk '{print $1}') in
-        '')
-            case $(grep "$1" $PATHS) in
-                '')
+    # case $(grep -w "$1" $MEMFILE | awk '{print $1}') in
+    #     '')
+    #         case $(grep "$1" $PATHS) in
+    #             '')
                     echo '  '"Repo not found in watchlist :("
-                ;;
-                *) 
-                    REPO=$1
-                    RNAME=$(echo "$1" | awk -F/ '{print $(NF)}')
-                    echo '  'Removing "$RNAME" from paths
-                    sed -i '.bak' -e "/$RNAME/d" $PATHS
-                    echo '  'Removing "$RNAME" from memory
-                    sed -i '.bak' -e "/$RNAME/d" $MEMFILE
-                    terminal-notifier -title $RNAME -message $"Removed from watchlist" -appIcon $ICON -sound Glass
-                ;;
-            esac
-        ;;
-        *) 
-            REPO=$1
-            RNAME=$(echo "$1" | awk -F/ '{print $(NF)}')
-            echo '  'Removing "$RNAME" from paths
-            sed -i '.bak' -e "/$RNAME/d" $PATHS
-            echo '  'Removing "$RNAME" from memory
-            sed -i '.bak' -e "/$RNAME/d" $MEMFILE
-            terminal-notifier -title $RNAME -message $"Removed from watchlist" -appIcon $ICON -sound Glass
-        ;;
-    esac
+    #             ;;
+    #             *) 
+    #                 REPO=$1
+    #                 RNAME=$(echo "$1" | awk -F/ '{print $(NF)}')
+
+    #                 # RNAME=$(git -C "$REPO" remote -v | sed -n '1p' | awk -F/ '{print $NF}' | awk -F.git '{print $1}')
+    #                 echo '  'Removing "$RNAME" from paths
+    #                 sed -i '.bak' -e "/$RNAME/d" $PATHS
+    #                 echo '  'Removing "$RNAME" from memory
+    #                 sed -i '.bak' -e "/$RNAME/d" $MEMFILE
+    #                 terminal-notifier -title $RNAME -message $"Removed from watchlist" -appIcon $ICON -sound Glass
+    #             ;;
+    #         esac
+    #     ;;
+    #     *) 
+    #         REPO=$1
+    #         RNAME=$(echo "$1" | awk -F/ '{print $(NF)}')
+    #         echo '  'Removing "$RNAME" from paths
+    #         sed -i '.bak' -e "/$RNAME/d" $PATHS
+    #         echo '  'Removing "$RNAME" from memory
+    #         sed -i '.bak' -e "/$RNAME/d" $MEMFILE
+    #         terminal-notifier -title $RNAME -message $"Removed from watchlist" -appIcon $ICON -sound Glass
+    #     ;;
+    # esac
 }
 
 listRepos () {
     while IFS= read -r REPOPATH
     do
-        REPO=$REPOPATH
-        RNAME=$(echo "$REPOPATH" | awk -F/ '{print $(NF)}')
+        REPO=$(echo "$REPOPATH" | awk -F$PATHSDELIMITER '{print $2}')
+        RNAME=$(git -C "$REPO" remote -v | sed -n '1p' | awk -F/ '{print $NF}' | awk -F.git '{print $1}')
+        REMOTE=$(git -C "$REPO" remote -v | sed -n '1p' | awk -F\  '{print $2}')
 
         echo "\n " "$RNAME"
-        echo '  Path:' "$REPOPATH"
+        echo '  Path:' "$REPO"
+        echo '  Git :' "$REMOTE"
         
         LASTKNOWN=$(grep -w "$RNAME" $MEMFILE | awk '{print $2}')
         echo '  Last Known Commit :' "$LASTKNOWN" 
 
-        COMM=$(git -C "$REPOPATH" show "$LASTKNOWN" --no-patch --format="%an%n%s%n%cd%n%D")
+        COMM=$(git -C "$REPO" show "$LASTKNOWN" --no-patch --format="%an%n%s%n%cd%n%D")
         AUTHOR=$(echo "$COMM" | sed -n '1p')
         MSG=$(echo "$COMM" | sed -n '2p')
         DATE=$(echo "$COMM" | sed -n '3p')
