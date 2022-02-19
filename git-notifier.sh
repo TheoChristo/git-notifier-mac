@@ -58,57 +58,48 @@ addRepo () {
     REPO=$(git -C "$REPOPATH" remote -v | sed -n '1p' | awk -F/ '{print $NF}' | awk -F.git '{print $1}')
     # Get last commit hash
     LASTCOMM=$(git -C "$REPOPATH" log --all -1 --format="%h")
+
+
+
     case $LASTCOMM in
-        '') echo Error adding "$REPO" to watchlist ':('
+        '') 
+            echo 'Error adding' "$REPO" 'to watchlist :('
         ;;
         *)
-        case $(grep -w "$REPO" $MEMFILE | awk '{print $1}') in
-            '')
-                # Store path
-                echo "$REPO""$MYDELIMITER""$REPOPATH" >> notifier-paths.txt
-                # Store last commit hash
-                echo "$REPO""$MYDELIMITER""$LASTCOMM" >> $MEMFILE
-                #Notify
-                echo '  '"$REPO" added to watchlist ':)'    
-                terminal-notifier -title $REPO -subtitle 'Added to watchlist' -message $"$REPOPATH" -appIcon $ICON -sound Glass
-            ;;
-            *) echo '  '"$REPO" 'is already in watchlist ;)'
-            ;;
-        esac
+            case $(grep -w "$REPO" $MEMFILE) in
+                '')
+                    # Store path
+                    echo "$REPO""$MYDELIMITER""$REPOPATH" >> notifier-paths.txt
+                    # Store last commit hash
+                    echo "$REPO""$MYDELIMITER""$LASTCOMM" >> $MEMFILE
+                    #Notify
+                    echo '  '"$REPO" 'added to watchlist :)'
+                    terminal-notifier -title $REPO -subtitle 'Added to watchlist' -message $"$REPOPATH" -appIcon $ICON -sound Glass
+                ;;
+                *) echo '  '"$REPO" 'is already in watchlist ;)'
+                ;;
+            esac
         ;;
     esac
 }
 
 removeRepo () {
-    # case $(grep -w "$1" $MEMFILE | awk '{print $1}') in
-    #     '')
-    #         case $(grep "$1" $PATHS) in
-    #             '')
-                    echo '  '"Repo not found in watchlist :("
-    #             ;;
-    #             *) 
-    #                 REPO=$1
-    #                 RNAME=$(echo "$1" | awk -F/ '{print $(NF)}')
-
-    #                 # RNAME=$(git -C "$REPO" remote -v | sed -n '1p' | awk -F/ '{print $NF}' | awk -F.git '{print $1}')
-    #                 echo '  'Removing "$RNAME" from paths
-    #                 sed -i '.bak' -e "/$RNAME/d" $PATHS
-    #                 echo '  'Removing "$RNAME" from memory
-    #                 sed -i '.bak' -e "/$RNAME/d" $MEMFILE
-    #                 terminal-notifier -title $RNAME -message $"Removed from watchlist" -appIcon $ICON -sound Glass
-    #             ;;
-    #         esac
-    #     ;;
-    #     *) 
-    #         REPO=$1
-    #         RNAME=$(echo "$1" | awk -F/ '{print $(NF)}')
-    #         echo '  'Removing "$RNAME" from paths
-    #         sed -i '.bak' -e "/$RNAME/d" $PATHS
-    #         echo '  'Removing "$RNAME" from memory
-    #         sed -i '.bak' -e "/$RNAME/d" $MEMFILE
-    #         terminal-notifier -title $RNAME -message $"Removed from watchlist" -appIcon $ICON -sound Glass
-    #     ;;
-    # esac
+    # Search in paths
+    RES=$(grep -w "$1" $PATHS)
+    case "$RES" in
+        '')
+            echo '  '"Repo not found in watchlist :("
+        ;;
+        *) 
+            # Get target name
+            TARGET=$(echo "$RES" | awk -F$MYDELIMITER '{print $1}')
+            # Remove from paths and commit hash memory
+            sed -i '.bak' -e "/$TARGET/d" $PATHS $MEMFILE
+            # Notify
+            echo '  '"$TARGET" 'removed from watchlist'
+            terminal-notifier -title $RNAME -message $"Removed from watchlist" -appIcon $ICON -sound Glass
+        ;;
+    esac
 }
 
 listRepos () {
