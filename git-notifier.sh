@@ -2,22 +2,22 @@
 VERSION='0.0.1'
 MEMFILE='notifier-memo.txt'
 PATHS='notifier-paths.txt'
-PATHSDELIMITER=','
+MYDELIMITER=','
 ICON='icons/logo.png'
 
 SLEEPSECONDS=300
 
 checkRepo () {
     # Decode Path
-    REPO=$(echo "$1" | awk -F$PATHSDELIMITER '{print $1}')
-    REPOPATH=$(echo "$1" | awk -F$PATHSDELIMITER '{print $2}')
+    REPO=$(echo "$1" | awk -F$MYDELIMITER '{print $1}')
+    REPOPATH=$(echo "$1" | awk -F$MYDELIMITER '{print $2}')
     #Fetch remote updates
     UPD=$(git -C "$REPOPATH" remote update)
     # Get last commit info
-    COMM=$(git -C "$REPOPATH" log --all -1 --format="%h%n%an%n%s%n%D") #hash,author,message,branch
+    COMM=$(git -C "$REPOPATH" log --all -1 --format="%h%n%an%n%s%n%D") # hash, author, message, branch
     LASTCOMM=$(echo "$COMM" | sed -n '1p')
     # Last tracked commit hash
-    LASTKNOWN=$(grep -w "$REPO" $MEMFILE | awk '{print $2}')
+    LASTKNOWN=$(grep -w "$REPO" $MEMFILE | awk -F$MYDELIMITER '{print $2}')
 
     if [ $LASTKNOWN = $LASTCOMM ];
     then
@@ -54,23 +54,25 @@ processRepos () {
 
 addRepo () {
     REPOPATH=$1
-    echo "$REPOPATH"
+    # Get repo name
     REPO=$(git -C "$REPOPATH" remote -v | sed -n '1p' | awk -F/ '{print $NF}' | awk -F.git '{print $1}')
-    
-    LASTCOMM=$(git -C "$REPOPATH" log -1 --all --oneline | awk '{print $1}')
+    # Get last commit hash
+    LASTCOMM=$(git -C "$REPOPATH" log --all -1 --format="%h")
     case $LASTCOMM in
         '') echo Error adding "$REPO" to watchlist ':('
         ;;
         *)
         case $(grep -w "$REPO" $MEMFILE | awk '{print $1}') in
             '')
-                echo "$REPO""$PATHSDELIMITER""$REPOPATH" >> notifier-paths.txt
-                echo "$REPO" $(echo "$LASTCOMM" | awk '{print $1}') >> $MEMFILE
+                # Store path
+                echo "$REPO""$MYDELIMITER""$REPOPATH" >> notifier-paths.txt
+                # Store last commit hash
+                echo "$REPO""$MYDELIMITER""$LASTCOMM" >> $MEMFILE
+                #Notify
                 echo '  '"$REPO" added to watchlist ':)'    
                 terminal-notifier -title $REPO -subtitle 'Added to watchlist' -message $"$REPOPATH" -appIcon $ICON -sound Glass
-    
             ;;
-            *) echo '  '"$REPO" is already 'in' watchlist ';)'
+            *) echo '  '"$REPO" 'is already in watchlist ;)'
             ;;
         esac
         ;;
@@ -110,25 +112,27 @@ removeRepo () {
 }
 
 listRepos () {
-    while IFS= read -r REPOPATH
+    while IFS= read -r REPOPATHINFO
     do
-        REPO=$(echo "$REPOPATH" | awk -F$PATHSDELIMITER '{print $2}')
-        RNAME=$(git -C "$REPO" remote -v | sed -n '1p' | awk -F/ '{print $NF}' | awk -F.git '{print $1}')
-        REMOTE=$(git -C "$REPO" remote -v | sed -n '1p' | awk -F\  '{print $2}')
-
-        echo "\n " "$RNAME"
-        echo '  Path:' "$REPO"
-        echo '  Git :' "$REMOTE"
-        
-        LASTKNOWN=$(grep -w "$RNAME" $MEMFILE | awk '{print $2}')
-        echo '  Last Known Commit :' "$LASTKNOWN" 
-
-        COMM=$(git -C "$REPO" show "$LASTKNOWN" --no-patch --format="%an%n%s%n%cd%n%D")
+        # Retrieve local repo name and path
+        REPO=$(echo "$REPOPATHINFO" | awk -F$MYDELIMITER '{print $1}')
+        REPOPATH=$(echo "$REPOPATHINFO" | awk -F$MYDELIMITER '{print $2}')
+        # Identify remote
+        REMOTE=$(git -C "$REPOPATH" remote -v | sed -n '1p' | awk -F\  '{print $2}')
+        # Retrieve last known commit
+        LASTKNOWN=$(grep -w "$REPO" $MEMFILE | awk -F$MYDELIMITER '{print $2}')
+        # Get last known commit info 
+        COMM=$(git -C "$REPOPATH" show "$LASTKNOWN" --no-patch --format="%an%n%s%n%cd%n%D") # author, message, date, branch
+        # Decode last known commit info 
         AUTHOR=$(echo "$COMM" | sed -n '1p')
         MSG=$(echo "$COMM" | sed -n '2p')
         DATE=$(echo "$COMM" | sed -n '3p')
-        BRANCH=$(echo "$COMM" | sed -n '4p') #| awk -F/ '{print $2}')
-
+        BRANCH=$(echo "$COMM" | sed -n '4p')
+        # Display
+        echo "\n " "$REPO"
+        echo '  Path:' "$REPOPATH"
+        echo '  Git :' "$REMOTE"
+        echo '  Last Known Commit :' "$LASTKNOWN" 
         echo '             Author :' "$AUTHOR"
         echo '             Date   :' $DATE
         echo '             Branch :' "$BRANCH"
