@@ -45,7 +45,7 @@ processRepos () {
     while true; do
         while IFS= read -r REPOPATH
         do
-            checkRepo "$REPOPATH"
+            checkRepo "$REPOPATH" &
         done <"$PATHS"
         echo ''
         sleep $SLEEPSECONDS
