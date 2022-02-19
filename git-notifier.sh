@@ -58,9 +58,6 @@ addRepo () {
     REPO=$(git -C "$REPOPATH" remote -v | sed -n '1p' | awk -F/ '{print $NF}' | awk -F.git '{print $1}')
     # Get last commit hash
     LASTCOMM=$(git -C "$REPOPATH" log --all -1 --format="%h")
-
-
-
     case $LASTCOMM in
         '') 
             echo 'Error adding' "$REPO" 'to watchlist :('
