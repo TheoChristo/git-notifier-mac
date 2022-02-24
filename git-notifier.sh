@@ -8,6 +8,7 @@ ICON='icons/logo.png'
 SLEEPSECONDS=300
 
 checkRepo () {
+    echo "Checking " $1
     # Decode Path
     REPO=$(echo "$1" | awk -F$MYDELIMITER '{print $1}')
     REPOPATH=$(echo "$1" | awk -F$MYDELIMITER '{print $2}')
@@ -25,7 +26,11 @@ checkRepo () {
     else
         echo "New commit available in" "$REPO" "/" $(echo "$COMM" | sed -n '4p')
         # Update last tracked commit hash
-        sed -i '.bak' -e "s/^$REPO.*/$REPO"$MYDELIMITER"$LASTCOMM/" $MEMFILE
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            sed -i '.bak' -e "s/^$REPO.*/$REPO"$MYDELIMITER"$LASTCOMM/" $MEMFILE
+        else 
+            sed -i -e "s/^$REPO.*/$REPO"$MYDELIMITER"$LASTCOMM/" $MEMFILE
+        fi
         # Decode last commit info
         AUTHOR=$(echo "$COMM" | sed -n '2p')
         MSG=$(echo "$COMM" | sed -n '3p')
@@ -33,7 +38,11 @@ checkRepo () {
         # Identify Remote
         REMOTE=$(git -C "$REPOPATH" remote -v | sed -n '1p' | awk -F\  '{print $2}')
         # Notify
-        terminal-notifier -title $AUTHOR -subtitle $REPO" / "$BRANCH -message $"$MSG" -appIcon $ICON -sound Glass -open $REMOTE
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            terminal-notifier -title $AUTHOR -subtitle $REPO" / "$BRANCH -message $"$MSG" -appIcon $ICON -sound Glass -open $REMOTE
+        else 
+            notify-send "$AUTHOR @ $REPO/$BRANCH" "$MSG" --icon=$(echo $(pwd)/$ICON)
+        fi  
     fi
 }
 
@@ -71,7 +80,11 @@ addRepo () {
                     echo "$REPO""$MYDELIMITER""$LASTCOMM" >> $MEMFILE
                     #Notify
                     echo '  '"$REPO" 'added to watchlist :)'
-                    terminal-notifier -title $REPO -subtitle 'Added to watchlist' -message $"$REPOPATH" -appIcon $ICON -sound Glass
+                    if [[ "$OSTYPE" == "darwin"* ]]; then
+                        terminal-notifier -title $REPO -subtitle 'Added to watchlist' -message $"$REPOPATH" -appIcon $ICON -sound Glass
+                    else
+                        notify-send "$REPO, added to watchlist" "$REPOPATH" --icon=$(echo $(pwd)/$ICON)
+                    fi
                 ;;
                 *) echo '  '"$REPO" 'is already in watchlist ;)'
                 ;;
@@ -91,10 +104,18 @@ removeRepo () {
             # Get target name
             TARGET=$(echo "$RES" | awk -F$MYDELIMITER '{print $1}')
             # Remove from paths and commit hash memory
-            sed -i '.bak' -e "/$TARGET/d" $PATHS $MEMFILE
+            if [[ "$OSTYPE" == "darwin"* ]]; then
+                sed -i '.bak' -e "/$TARGET/d" $PATHS $MEMFILE
+            else
+                sed -i -e "/$TARGET/d" $PATHS $MEMFILE
+            fi
             # Notify
             echo '  '"$TARGET" 'removed from watchlist'
-            terminal-notifier -title $RNAME -message $"Removed from watchlist" -appIcon $ICON -sound Glass
+            if [[ "$OSTYPE" == "darwin"* ]]; then
+                terminal-notifier -title $TARGET -message $"Removed from watchlist" -appIcon $ICON -sound Glass
+            else
+                notify-send "$TARGET" 'Removed from watchlist' --icon=$(echo $(pwd)/$ICON)
+            fi
         ;;
     esac
 }
